@@ -1,0 +1,59 @@
+<script>
+    /**
+ * Controlador visual encargado de gestionar los clics del menú lateral y conmutar estados.
+ */
+const NavigationDOM = {
+    elementos: {
+        listaMenu: () => document.getElementById('sidebar-list'),
+        enlaces: () => document.querySelectorAll('.sidebar-link')
+    },
+
+    /**
+     * Inicializa un único escuchador de eventos global para todo el menú (Delegación).
+     */
+    inicializar() {
+        this.elementos.listaMenu()?.addEventListener('click', (e) => {
+            // Buscamos el enlace (.sidebar-link) más cercano al elemento cliqueado
+            const enlace = e.target.closest('.sidebar-link');
+            if (!enlace) return;
+
+            // DETENER DUPLICADOS DE RAÍZ:
+            e.preventDefault();
+            e.stopImmediatePropagation(); 
+            
+            this._activarEnlaceVisual(enlace);
+            this._procesarRuta(enlace);
+        });
+    },
+
+    /**
+     * Modifica las clases CSS de la Sidebar de forma centralizada.
+     */
+    _activarEnlaceVisual(enlaceSeleccionado) {
+        this.elementos.enlaces().forEach(link => link.classList.remove('sidebar-link--active'));
+        enlaceSeleccionado.classList.add('sidebar-link--active');
+    },
+
+    /**
+     * Evalúa qué acción o pantalla disparar según el ID o atributos del enlace.
+     */
+    _procesarRuta(enlace) {
+        const idRuta = enlace.id;
+ 
+        // Caso 2: Es un cambio de pantalla o acción de utilidades
+        switch (idRuta) {
+            case 'link-notebooks':
+                NotebookDOM.renderizar();
+                break;
+            case 'link-carros':
+                console.log("Navegando a Carros...");
+                break;
+            case 'link-modelos':
+                console.log("Navegando a Modelos...");
+                break;    
+            default:
+                console.warn(`Ruta no manejada: ${idRuta}`);
+        }
+    }
+};
+</script>

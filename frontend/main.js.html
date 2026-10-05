@@ -1,0 +1,48 @@
+<script>
+    // Estado global centralizado de la aplicación
+    const AppState = {
+        datosNotebooks: [],        // Filas de la tabla (Registros)
+        cabecerasNotebooks: [],
+        datosCarros: [[1, 'C1', 'Almacén A', 'Activo', '10 Notebooks', 'Juan Pérez'],
+        [2, 'C2', 'Almacén B', 'Activo', '5 Notebooks', 'María López'],
+        [3, 'C3', 'Almacén C', 'Inactivo', '0 Notebooks', 'Carlos García']
+        ],
+        cabecerasCarros: ['Id', 'Carro', 'Ubicación', 'Estado', 'Carga', 'Responsable'],
+        datosModelos: [[1, 'Acer', 'Aspire', 'Negro', 'Intel i5', false, true, '15.6"', '8GB', '10', 2020]],
+        cabecerasModelos: ['Id', 'Dispositivo', 'Marca', 'Modelo', 'Color', 'Procesador', 'Touch', 'LAN', 'Pantalla', 'RAM', 'Windows', 'Año'],
+        estadoActual: 'Notebooks',
+        paginasTabla: 14 // Encabezados de la tabla
+    };
+
+    // Escuchar el evento de carga del navegador
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Inicializar componentes estáticos de la interfaz gráfica (Fijos en el DOM)
+        TopbarDOM.inicializar();      // <-- Este ya maneja internamente el botón #go-home-btn
+        NavigationDOM.inicializar();
+        NotebookDOM.inicializar()
+        TablaDOM.inicializar();
+        ModalDOM.inicializar();
+
+        // 2. Arrancar la carga asíncrona de datos desde Google Sheets
+        iniciarSistema();
+    });
+
+    /**
+     * Orquestador de arranque del sistema.
+     * Carga de forma asíncrona y en paralelo la información del usuario y la tabla principal.
+     */
+    async function iniciarSistema() {
+        try {
+            await Promise.all([
+                UserDOM.cargarInformacion(),
+                NotebookDOM.renderizar(),
+                TablaDOM.cargarNotebooks()
+            ]);
+        } catch (err) {
+            console.error("Error crítico durante la inicialización:", err);
+            if (typeof showToast === 'function') {
+                showToast('error', 'Error al sincronizar los datos iniciales de la aplicación.');
+            }
+        }
+    }
+</script>

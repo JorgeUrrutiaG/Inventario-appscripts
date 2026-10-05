@@ -1,0 +1,20 @@
+<div class="modal fade registro-modal" id="registroModal" data-bs-backdrop="static" data-bs-keyboard="false"
+    tabindex="-1" aria-labelledby="registroLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-3" id="registroLabel"></h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form name="registroForm" id="registroForm" class="px-4 py-3 needs-validation" novalidate>
+                </form>
+            </div>
+            <div class="record-modal-footer" id="modalFooter">
+                <button type="button" class="cancel-btn close-modal" data-bs-dismiss="modal"
+                    id="closeBtn">Cancelar</button>
+                <button type="button" class="save-btn" onclick="saveModal(this)">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>

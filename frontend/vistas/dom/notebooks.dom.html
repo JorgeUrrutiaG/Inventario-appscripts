@@ -1,0 +1,99 @@
+<script>
+    const NotebookDOM = {
+        inicializar: function () {
+             const data= [
+                [ 1, 1,'Dell', 'Inspiron', '8GB', '15.6"', 'SN123456', '10', 'NI001', 2020, 'C1', 'Operativo', 'Ninguna' ],
+                [ 2, 2,'HP', 'Pavilion', '16GB', '14"', 'SN654321', '11', 'NI002', 2021, 'C2', 'Malo', 'Pantalla rota' ],
+                [ 3, 3,'Lenovo', 'ThinkPad', '8GB', '13.3"', 'SN789012', '10', 'NI003', 2019, 'C1', 'Operativo', 'Batería nueva' ],
+                [ 4, 4,'Acer', 'Aspire', '4GB', '15.6"', 'SN345678', '10', 'NI004', 2018, 'C3', 'Malo', 'Teclado dañado' ],
+                [ 5, 5,'Asus', 'ZenBook', '16GB', '14"', 'SN901234', '11', 'NI005', 2022, 'C2', 'Operativo', 'Ninguna' ],
+                [ 6, 6,'Apple', 'MacBook Air', '8GB', '13.3"', 'SN567890', '10', 'NI006', 2020, 'C1', 'Operativo', 'Ninguna' ],
+                [ 7, 7,'Microsoft', 'Surface Laptop', '16GB', '15"', 'SN234567', '11', 'NI007', 2021, 'C2', 'Malo', 'Pantalla táctil rota' ],
+                [ 8, 8,'Samsung', 'Galaxy Book', '8GB', '15.6"', 'SN890123', '10', 'NI008', 2019, 'C3', 'Operativo', 'Ninguna' ],
+                [ 9, 9,'Razer', 'Blade Stealth', '16GB', '13.3"', 'SN456789', '10', 'NI009', 2020, 'C1', 'Malo', 'Batería defectuosa' ],
+                [ 10, 10,'HP', 'Pavilion', '8GB', '14"', 'SN012345', '11', 'NI010', 2022, 'C2', 'Operativo', 'Ninguna' ]
+            ];       // Filas de la tabla (Registros)
+            const cabeceras= ['Id', 'Posición', 'Marca', 'Modelo', 'Ram', 'Pantalla', 'Serie', 'Windows', 'Nro Interno', 'Año compra', 'Carro', 'Estado', 'Observación'];
+            AppState.datosNotebooks = data;
+            AppState.cabecerasNotebooks = cabeceras;
+            const tablaContainer = document.querySelector('.table-container');
+            tablaContainer.classList.add('notebooks-view');
+            // AppState.paginasTabla = null; // Encabezados de la tabla
+        },
+
+        _procesarMetricasYDatos() {
+            const metricas = { notebooks: 0, malos: 0, carros: 0, modelos: 0 };
+            metricas.notebooks = AppState.datosNotebooks.length;
+            metricas.malos = AppState.datosNotebooks.filter(fila => fila[11] === 'Malo').length;
+            metricas.carros = AppState.datosCarros.length;
+            metricas.modelos = AppState.datosModelos.length;
+            return { metricas };
+        },
+
+        // /**
+        //  * Genera el HTML de las tarjetas de métricas.
+        //  */
+        _obtenerHtmlMetricas(metricas) {
+            return `
+                <div class="metrics-grid">
+                    <div class="metric-card totales"><div class="metric-lbl">Notebooks Total</div><div class="metric-val">${metricas.notebooks}</div></div>
+                    <div class="metric-card urgente"><div class="metric-lbl">Notebooks Malos</div><div class="metric-val">${metricas.malos}</div></div>
+                    <div class="metric-card alta"><div class="metric-lbl">Carros Total</div><div class="metric-val">${metricas.carros}</div></div>
+                    <div class="metric-card media"><div class="metric-lbl">Modelos Total</div><div class="metric-val">${metricas.modelos}</div></div>
+                </div>`;
+        },
+        renderizar: function () {
+            const { metricas } = this._procesarMetricasYDatos();
+
+            // 1. Insertar las métricas antes de la tabla
+            const contenedorMetricas = document.querySelector('.metrics-container');
+            document.querySelector('.metrics-grid')?.remove();
+
+            if (contenedorMetricas) {
+                contenedorMetricas.insertAdjacentHTML('afterbegin', this._obtenerHtmlMetricas(metricas));
+            }
+
+            // 2. Modificar el título del panel superior
+            const titulo = document.getElementById('titulo');
+            if (titulo) titulo.innerText = "NOTEBOOKS";
+
+            // 3. CONTROL DE VISIBILIDAD ESTRICTO:
+            // Ocultamos la barra de botones (Nueva Tarea y Excel)
+            const barraBotones = document.querySelector('.btns-bar');
+            if (barraBotones) barraBotones.style.display = 'none';
+
+            // Ocultamos el paginador global
+            // const paginadorGlobal = document.getElementById('paginador');
+            // if (paginadorGlobal) paginadorGlobal.style.display = 'none';
+        }
+    };
+
+  // En inicializar:
+         // Aquí puedes inicializar cualquier cosa que necesites para la vista de Notebooks
+            // this.obtenerStateNotebooks().then(() => {
+            //     this.renderizar();
+            //     TablaDOM.renderizar(AppState.datosNotebooks); // Asegúrate de que la tabla se renderice después de obtener los datos
+            // }).catch(err => {
+            //     console.error("Error al inicializar NotebookDOM:", err);
+            //     showToast('error', 'Error al cargar los datos de Notebooks.');
+            // });
+
+
+
+            // async obtenerStateNotebooks(){
+        //     if(AppState.datosNotebooks.length === 0){
+        //         try {
+        //             const data = await AppScriptService.obtenerNotebooks();
+        //             AppState.datosNotebooks = data.filas;
+        //             AppState.cabecerasNotebooks = data.cabeceras;
+        //         } catch (err) {
+        //             console.error("Error al obtener notebooks:", err);
+        //             showToast('error', 'Error al obtener los datos de Notebooks.');
+        //         }
+
+        //     }else{
+        //         console.log("Datos de Notebooks ya cargados en AppState.");
+        //     }
+        // },
+
+</script>

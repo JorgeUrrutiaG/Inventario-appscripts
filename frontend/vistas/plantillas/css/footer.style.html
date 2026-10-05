@@ -1,0 +1,30 @@
+<style>
+    .footer {
+        grid-area: footer;
+        /* height: var(--footer-height); */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+        background-color: var(--bg-dark-deep);
+        box-shadow: 2px 0 5px #125185;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .footer-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .footer-status .status-dot.online {
+        background-color: var(--accent-green);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--accent-green);
+        display: inline-block;
+    }
+</style>

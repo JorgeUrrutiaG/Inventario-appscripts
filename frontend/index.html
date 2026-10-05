@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario CSCJ</title>
+  <!-- CSS Globales -->
+  <?!= include('frontend/vistas/css/links.css'); ?>
+  <?!= include('frontend/vistas/css/main.css'); ?>
+
+  <!-- CSS Componentes -->
+  <?!=include("frontend/vistas/plantillas/css/footer.style"); ?>
+  <?!=include("frontend/vistas/plantillas/css/topbar.style"); ?>
+  <?!=include("frontend/vistas/plantillas/css/sidebar.style"); ?>
+  <?!= include('frontend/vistas/plantillas/css/modal.style'); ?>
+  <?!= include('frontend/vistas/plantillas/css/tabla.style'); ?>
+  <?!= include('frontend/vistas/plantillas/css/form.style'); ?>
+  <?!= include('frontend/vistas/plantillas/css/toast.style'); ?>
+  <base target="_top">
+</head>
+
+<body>
+  <header class="topbar">
+    <?!=include("frontend/vistas/plantillas/topbar"); ?>
+  </header>
+  <aside class="sidebar">
+    <?!=include("frontend/vistas/plantillas/sidebar"); ?>
+  </aside>
+
+  <main class="main">
+    <?!= include("frontend/vistas/notebooks"); ?>
+    <?!= include("frontend/vistas/plantillas/tabla"); ?>
+  </main>
+  <footer class="footer">
+    <?!= include("frontend/vistas/plantillas/footer"); ?>
+  </footer>
+  <div class="toast-box top-right"></div>
+
+  <!-- ========================================== -->
+  <!-- SCRIPTS Y CONTROLADORES                    -->
+  <!-- ========================================== -->
+
+  <!-- 1. Utilidades y Helpers Base -->
+  <?!= include("frontend/helpers/excel.service"); ?>
+
+  <!-- 2. Adaptador Central de Comunicación con Apps Script -->
+  <?!= include("frontend/services/appscript.client"); ?>
+  <!-- 3. Servicios de Datos (Lógica de Negocio) -->
+  <?!= include("frontend/services/user.services"); ?>
+  <!-- 4. Controladores de Interfaz Gráfica (DOM / Vistas) -->
+  <?!= include("frontend/vistas/dom/user.dom"); ?>
+  <?!= include("frontend/vistas/dom/notebooks.dom"); ?>
+  <?!= include("frontend/vistas/dom/navegacion.dom"); ?>
+  <!-- Scripts -->
+  <!-- 5. Controladores del Layout y Componentes Genéricos -->
+  <?!= include("frontend/vistas/dom/modal.dom"); ?>
+  <?!= include("frontend/vistas/dom/form.dom"); ?>
+  <?!= include("frontend/vistas/dom/tabla.dom"); ?>
+  <?!= include("frontend/vistas/dom/toast.dom"); ?>
+  <?!= include("frontend/vistas/dom/topbar.dom"); ?>
+  <!-- 6. Inicializador de la Aplicación -->
+  <?!= include("frontend/main.js"); ?>
+
+</body>
+
+</html>

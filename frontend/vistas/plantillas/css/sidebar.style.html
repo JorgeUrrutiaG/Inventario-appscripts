@@ -1,0 +1,127 @@
+<style>
+ /*--------------- Sidebar ---------------*/
+
+    .sidebar {
+        grid-area: sidebar;
+        background-color: #206dea;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding-top: 20px;
+
+    }
+
+    .sidebar-logo {
+        text-align: center;
+        padding: 15px 0;
+        font-size: 1.2rem;
+    }
+
+    .sidebar-menu ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sidebar-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 50px;
+        width: 100%;
+        padding: 5px 0;
+        white-space: nowrap;
+    }
+
+    .sidebar-item:hover {
+        background-color: #0f0000;
+        color: rgb(153, 45, 45);
+
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        color: white;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: bold;
+        height: 50px;
+        width: 100%;
+        padding: 0 20px;
+        /* Centra el icono en el espacio de 60px */
+        white-space: nowrap;
+        /* Evita que el texto salte de línea al achicarse */
+        transition: background 0.2s, color 0.25s;
+        /* position:relative; */
+    }
+
+    .sidebar-link--menu {
+        pointer-events: none;
+        color: var(--orange-color);
+        font-size: 0.8rem;
+    }
+
+    .sidebar-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: tomato;
+        font-size: 0.8rem;
+        border-left: 3px solid var(--orange-color);
+    }
+
+    /* Estilo para el ítem activo en el menú lateral */
+    .sidebar-link--active {
+        background-color: #334155 !important;
+        color: tomato !important;
+        border-left: 4px solid tomato !important;
+        font-weight: bold;
+    }
+
+    .sidebar-link i,
+    .sidebar .menu-title i {
+        font-size: 1.2rem;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    .sidebar .menu-title .link-text {
+        margin-left: 20px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .tooltip {
+        position: absolute;
+        left: 55px;
+        margin-top: 15px;
+        transform: translateY(-30%) translateX(-10px);
+        background-color: var(--dark-color);
+        color: var(--orange-color);
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 105;
+        line-height: 1.8rem;
+        box-shadow: 0 0.5rem 0.8rem rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+    }
+
+    .sidebar-item:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(-30%) translateX(6px);
+    }
+
+    .sidebar-divider {
+        list-style: none;
+        border: 0.5px solid #444;
+        margin: 10px 15px;
+    }
+
+
+</style>
