@@ -54,7 +54,7 @@
     }
 
     .oculto {
-        display: none;
+        display: none !important;
     }
 
     /*-----------------Botones---------------*/
@@ -150,6 +150,8 @@
        /* background-color: rgb(31, 31, 31); */
         border-radius: 20px;
         overflow: auto;
+        display: flex;
+        flex-direction: column;
 
     }
 
@@ -158,11 +160,12 @@
     .metrics-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        height: 100px;
+        min-height: 100px;
         gap: 15px;
         margin-top: 10px;
-        margin-bottom: 0;
+        margin-bottom: 10px;
         font-family: 'Poppins', sans-serif;
+        flex: 0 0 auto;
     }
 
     /* Tarjeta base */
@@ -183,6 +186,15 @@
 
     .metric-card:hover {
         transform: translateY(-2px);
+    }
+
+    /* Tarjeta que al hacer clic filtra la tabla */
+    .metric-card.metric-filtrable {
+        cursor: pointer;
+    }
+
+    .metric-card.metric-filtrable:active {
+        transform: translateY(0);
     }
 
     /* Textos de la tarjeta */

@@ -4,6 +4,7 @@
     // ============================================================
     const AppState = {
         estadoActual: 'Notebook',                     // 'Notebook' | 'Carro' | 'Modelo'
+        datosListos: false,
         usuario: { email: '', nombre: '', perfil: '', autorizado: false },
         datos: { Notebook: [], Carro: [], Modelo: [] },
         cabeceras: { Notebook: [], Carro: [], Modelo: [] },
@@ -19,6 +20,7 @@
             titulo: 'NOTEBOOKS',
             conMetricas: true,
             conCantidad: false,
+            conBotonNuevo: false,
             dom: NotebookDOM,
             servicio: NotebookService,
             marcaCol: 2,
@@ -67,16 +69,32 @@
                 AppState.usuario.perfil === 'Supervisor';
         },
 
+        /** Crear registros (botón NUEVO): solo Supervisor. */
+        puedeCrear() {
+            return AppState.usuario.perfil === 'Supervisor';
+        },
+
         puedeEliminar() {
             return AppState.usuario.perfil === 'Supervisor';
         },
 
         actualizarPermisosUI() {
-            const btnNuevo = document.querySelector('.btn-open-new');
-            if (btnNuevo) btnNuevo.classList.toggle('oculto', !this.puedeEscribir());
-            if (AppState.estadoActual) {
+            this._actualizarBotonNuevo();
+            // Solo repinta si los datos iniciales ya cargaron (evita tapar el loading)
+            if (AppState.datosListos && AppState.estadoActual) {
                 TablaDOM.renderizar(TablaDOM.datosFiltradosActuales);
             }
+        },
+
+        /**
+         * El botón NUEVO se oculta en la vista Notebooks y solo está disponible para Supervisor.
+         */
+        _actualizarBotonNuevo() {
+            const btnNuevo = document.querySelector('.btn-open-new');
+            if (!btnNuevo) return;
+            const config = VISTAS[AppState.estadoActual];
+            const permitido = this.puedeCrear() && config?.conBotonNuevo !== false;
+            btnNuevo.classList.toggle('oculto', !permitido);
         },
 
         // ---------- Datos ----------
@@ -135,8 +153,7 @@
                 document.querySelector('.metrics-grid')?.remove();
             }
 
-            // La tabla se encoge solo cuando el panel de métricas está visible
-            document.querySelector('.table-container')?.classList.toggle('notebooks-view', config.conMetricas);
+            this._actualizarBotonNuevo();
 
             const barraBotones = document.querySelector('.btns-bar');
             if (barraBotones) barraBotones.style.display = 'flex';
@@ -171,6 +188,7 @@
                     this._cargarEntidad('Carro'),
                     this._cargarEntidad('Modelo')
                 ]);
+                AppState.datosListos = true;
                 this.cambiarVista(AppState.estadoActual);
             } catch (err) {
                 console.error('Error crítico durante la inicialización:', err);

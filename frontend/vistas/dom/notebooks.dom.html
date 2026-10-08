@@ -20,7 +20,7 @@
                         <div class="metric-lbl">Notebooks Total</div>
                         <div class="metric-val">${m.notebooks}</div>
                     </div>
-                    <div class="metric-card urgente">
+                    <div class="metric-card urgente metric-filtrable" data-filtro="Malo" title="Clic para filtrar la tabla por estado Malo">
                         <div class="metric-lbl">Notebooks Malos</div>
                         <div class="metric-val">${m.malos}</div>
                     </div>
@@ -33,6 +33,14 @@
                         <div class="metric-val">${m.modelos}</div>
                     </div>
                 </div>`);
+
+            // Clic en la tarjeta "Notebooks Malos" → escribe "Malo" en el buscador y filtra
+            contenedor.querySelector('[data-filtro]')?.addEventListener('click', () => {
+                const buscador = document.getElementById('buscador');
+                if (!buscador) return;
+                buscador.value = buscador.value.trim() === 'Malo' ? '' : 'Malo';
+                TablaDOM.refrescar();
+            });
         }
     };
 </script>

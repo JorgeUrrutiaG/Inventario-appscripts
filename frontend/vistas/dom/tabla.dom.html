@@ -175,11 +175,19 @@
             if (!cabeceras) cabeceras = Sistema.filasVista(entidad).cabeceras;
             this.datosFiltradosActuales = filas;
 
+            // Carro: columna de acciones solo para perfiles que pueden editar.
+            // Notebook/Modelo: columna de acciones solo para Supervisor (eliminación);
+            // el perfil Informático no ve la columna.
+            const puedeEliminar = Sistema.puedeEliminar();
+            const puedeEscribir = Sistema.puedeEscribir();
+            const mostrarEdicion = config.acciones === 'editar';
+            const mostrarColAcciones = mostrarEdicion ? puedeEscribir : puedeEliminar;
+
             thead.innerHTML = `<tr>${cabeceras.map(h => `<th>${escapeHtml(h)}</th>`).join('')}
-                <th class="text-center">Acciones</th></tr>`;
+                ${mostrarColAcciones ? '<th class="text-center">Acciones</th>' : ''}</tr>`;
 
             if (filas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${cabeceras.length + 1}"
+                tbody.innerHTML = `<tr><td colspan="${cabeceras.length + (mostrarColAcciones ? 1 : 0)}"
                     style="text-align:center; padding: 20px; color: #6b7280;">
                     No se encontraron registros.</td></tr>`;
                 this.renderizarControlesPaginacion();
@@ -188,22 +196,17 @@
 
             const inicio = (this.paginaActual - 1) * this.filasPorPagina;
             const filasPagina = filas.slice(inicio, inicio + this.filasPorPagina);
-            const puedeEliminar = Sistema.puedeEliminar();
-            const puedeEscribir = Sistema.puedeEscribir();
-            // Carro muestra botón de edición; Notebook y Modelo muestran eliminación
-            const mostrarEdicion = config.acciones === 'editar';
 
             tbody.innerHTML = filasPagina.map(fila => {
                 const id = fila[config.columnas.id];
                 const filaJsonSeguro = encodeURIComponent(JSON.stringify(fila));
 
-                let acciones = '';
-                if (mostrarEdicion) {
-                    if (puedeEscribir) {
-                        acciones = `<button class="btn-mini btn-edit" data-id="${escapeHtml(id)}" title="Editar"><i class="bi bi-pencil"></i></button>`;
-                    }
-                } else if (puedeEliminar) {
-                    acciones = `<button class="btn-mini btn-delete" data-id="${escapeHtml(id)}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+                let celdaAcciones = '';
+                if (mostrarColAcciones) {
+                    const boton = mostrarEdicion
+                        ? `<button class="btn-mini btn-edit" data-id="${escapeHtml(id)}" title="Editar"><i class="bi bi-pencil"></i></button>`
+                        : `<button class="btn-mini btn-delete" data-id="${escapeHtml(id)}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+                    celdaAcciones = `<td class="acciones-celda text-center"><div>${boton}</div></td>`;
                 }
 
                 return `
@@ -217,9 +220,7 @@
                         }
                         return `<td>${escapeHtml(celda)}</td>`;
                     }).join('')}
-                    <td class="acciones-celda text-center">
-                        <div>${acciones}</div>
-                    </td>
+                    ${celdaAcciones}
                 </tr>`;
             }).join('');
 

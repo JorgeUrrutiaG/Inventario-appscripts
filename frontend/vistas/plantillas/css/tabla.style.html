@@ -2,17 +2,14 @@
     .table-container {
         background-color: #eeeeee;
         width: 100%;
-        height: calc(100vh - 20px);
-        /* margin: 0 auto 20px auto; */
+        /* Ocupa el espacio restante del main (flex); crece si las métricas envuelven a 2 filas */
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
         padding: 0 10px;
         overflow: auto;
         border: 1px solid #5d5d5e;
         border-radius: 8px;
-    }
-
-    /* La tabla se encoge cuando el panel de métricas está visible */
-    .table-container.notebooks-view {
-        height: calc(100vh - var(--topbar-height) - var(--footer-height) - 130px);
     }
 
     .table-container .table {
@@ -27,6 +24,7 @@
     .table-container .table td {
         padding: 4px 8px;
         border-bottom: 1px solid #bebebe;
+        vertical-align: middle;
     }
 
     .table-head {
@@ -53,6 +51,8 @@
         font-weight: 600;
         cursor: pointer;
         font-size: 0.85em;
+        /* Alto uniforme en todas las vistas (Notebook, Carro, Modelo) */
+        /* height: 20px; */
     }
 
     .table-body td {
@@ -96,11 +96,15 @@
 
     .btn-mini {
         border: none;
-        padding: 5px 8px;
+        padding: 3px 7px;
         border-radius: 4px;
         cursor: pointer;
         font-size: 0.9rem;
         transition: transform 0.2s;
+    }
+
+    .btn-mini i{
+        font-size: 0.6rem;
     }
 
     .btn-mini:hover {
@@ -108,8 +112,8 @@
     }
 
     .btn-edit {
-        background: #e0f2fe;
-        color: #0369a1;
+        background: #036aa1e1;
+        color: #e0f2fe;
     }
 
     .estado-malo {
