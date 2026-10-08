@@ -1,0 +1,19 @@
+<script>
+/**
+ * Servicio de datos y CRUD de Modelos (hoja Modelos).
+ */
+const ModeloService = {
+    obtener() {
+        return AppScriptService.obtenerModelos();
+    },
+    guardar(datos) {
+        return AppScriptService._run('guardarNuevoModelo', datos);
+    },
+    editar(id, datos) {
+        return AppScriptService._run('editarModelo', id, datos);
+    },
+    eliminar(id) {
+        return AppScriptService._run('eliminarModelo', id);
+    }
+};
+</script>

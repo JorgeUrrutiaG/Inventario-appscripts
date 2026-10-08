@@ -10,8 +10,7 @@
 
         // Referencias centralizadas y perezosas al DOM
         elementos: {
-            cajaToast: () => document.querySelector(".toast-box"),
-            cajaMensaje: () => document.querySelector(".message-box")
+            cajaToast: () => document.querySelector(".toast-box")
         },
 
         /**
@@ -66,24 +65,6 @@
         },
 
         /**
-         * Muestra un mensaje estático integrado en un contenedor inline de la UI.
-         */
-        mostrarMensaje(mensaje, tipo = '') {
-            const caja = this.elementos.cajaMensaje();
-            if (!caja) return; // Seguro por si el elemento no existe en el layout actual
-
-            caja.textContent = mensaje;
-            const claseTipo = (tipo !== '') ? 'error' : 'success';
-            
-            caja.classList.add(claseTipo);
-            
-            setTimeout(() => {
-                caja.classList.remove(claseTipo);
-                caja.textContent = ''; // Limpia el texto al retirar el estado
-            }, 4000);
-        },
-
-        /**
          * Limpia todas las clases adicionales del contenedor principal (excepto la base).
          */
         limpiarClasesContenedor() {
@@ -98,10 +79,7 @@
     };
 
     // =========================================================================
-    // COMPATIBILIDAD RETROACTIVA (Bridges / Puentes)
+    // COMPATIBILIDAD RETROACTIVA (Bridge / Puente)
     // =========================================================================
-    // Mantenemos las funciones globales antiguas apuntando al nuevo objeto 
-    // para no tener que romper o cambiar el código en tus otros archivos.
     const showToast = (id, mensaje) => ToastDOM.mostrarToast(id, mensaje);
-    const showMessage = (mensaje, tipo) => ToastDOM.mostrarMensaje(mensaje, tipo);
 </script>

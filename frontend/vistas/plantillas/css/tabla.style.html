@@ -10,8 +10,9 @@
         border-radius: 8px;
     }
 
-    .notebooks-view {
-        height: calc(100vh - var(--topbar-height) - var(--footer-height) - 150px);
+    /* La tabla se encoge cuando el panel de métricas está visible */
+    .table-container.notebooks-view {
+        height: calc(100vh - var(--topbar-height) - var(--footer-height) - 130px);
     }
 
     .table-container .table {
@@ -84,7 +85,7 @@
         color: #e2f1e5;
     }
 
-    /*----------- Badges de Prioridad (Opcional) ----------*/
+    /*----------- Badges de estados y marcas ----------*/
     .badge {
         padding: 4px 8px;
         border-radius: 15px;
@@ -93,23 +94,6 @@
         background: #494949;
     }
 
-    .prioridad-urgente {
-        color: rgb(250, 66, 66);
-    }
-
-    .prioridad-alta {
-        color: #fd8773;
-    }
-
-    .prioridad-media {
-        color: #e2a35a;
-    }
-
-    .prioridad-baja {
-        color: #5fcc87;
-    }
-
-    .tarea-cerrada,
     .btn-mini {
         border: none;
         padding: 5px 8px;
@@ -123,23 +107,9 @@
         transform: scale(1.1);
     }
 
-    .tarea-cerrada {
-        padding: 3px 8px;
-    }
-
-    .tarea-cerrada:hover {
-        cursor: no-drop;
-    }
-
     .btn-edit {
         background: #e0f2fe;
         color: #0369a1;
-    }
-
-
-    .btn-close {
-        background: #996c6f;
-        color: #f7f3f2;
     }
 
     .estado-malo {
@@ -152,22 +122,30 @@
         color: rgb(211, 226, 214);
     }
 
+    .estado-semi-operativo {
+        background-color: #b45309;
+        color: #fff7ed;
+    }
+
+    .estado-baja {
+        background-color: #374151;
+        color: #e5e7eb;
+    }
+
+    .estado-activo {
+        background-color: #105a2b;
+        color: rgb(211, 226, 214);
+    }
+
+    .estado-inactivo {
+        background-color: #771d25;
+        color: white;
+    }
+
     .btn-delete {
         background: #771d25;
         color: #ffdfdf;
     }
-
-
-    .btn-lock {
-        background-color: #809b8a;
-        color: #ddf1dd;
-    }
-
-    .tarea-cerrada,
-    .btn-close {
-        margin-right: 2px;
-    }
-
 
     /*-------- Paginador----------*/
 
@@ -241,7 +219,7 @@
         align-items: center;
         justify-content: center;
         white-space: nowrap;
-        /* Evita que el texto de NUEVA TAREA se rompa en dos líneas */
+        /* Evita que el texto del botón NUEVO se rompa en dos líneas */
     /* } */
 
     /* Buscador Moderno */
@@ -300,5 +278,17 @@
 
     .marca-acer {
         color: #83B81A;
+    }
+
+    .marca-stem {
+        color: #0f766e;
+    }
+
+    .marca-apple {
+        color: #555555;
+    }
+
+    .marca-microsoft {
+        color: #0067b8;
     }
 </style>

@@ -3,13 +3,13 @@
 
 <head>
     <base target="_top">
-    <?!= include('frontend/css/error.css'); ?>
+    <?!= include('frontend/vistas/css/error.css'); ?>
 </head>
 
 <body>
     <div class="error-container">
         <a href="#" class="text-center"><img
-                src=" https://drive.google.com/thumbnail?id=1TA-SwDW0F8xlJiZ7x8LuVdNbWYDDMtUj" width="120"
+                src="https://drive.google.com/thumbnail?id=1TA-SwDW0F8xlJiZ7x8LuVdNbWYDDMtUj" width="120"
                 height="120" />
         </a>
         <h2>Acceso denegado</h2>
@@ -17,7 +17,7 @@
         <hr>
         <p>Si crees que esto es un error, por favor contacta al administrador del sistema.</p>
         <hr>
-        <p class="mail">[EMAIL_ADDRESS]</p>
+        <p class="mail"><?= email ?></p>
     </div>
 </body>
 

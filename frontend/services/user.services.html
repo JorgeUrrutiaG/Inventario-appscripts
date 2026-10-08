@@ -1,25 +1,23 @@
 <script>
-
 /**
- * Servicio encargado de la lógica y obtención de datos del usuario.
+ * Servicio de datos del usuario activo.
  */
 const UserService = {
     /**
-     * Solicita y valida los datos del usuario activo.
-     * @returns {Promise<{nombre: string, email: string}>}
+     * @returns {Promise<{nombre: string, email: string, perfil: string}>}
      */
     async obtenerDatos() {
         try {
             const user = await AppScriptService.obtenerUsuarioLogueado();
-            
             return {
                 nombre: user?.nombre || 'Usuario Anónimo',
-                email: user?.email || 'Sin correo registrado'
+                email: user?.email || 'Sin correo registrado',
+                perfil: user?.perfil || '',
+                autorizado: Boolean(user?.autorizado)
             };
         } catch (err) {
             throw new Error(`Error de backend: ${err.message}`);
         }
     }
 };
-
 </script>

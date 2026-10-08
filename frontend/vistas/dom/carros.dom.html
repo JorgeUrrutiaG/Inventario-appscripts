@@ -1,0 +1,134 @@
+<script>
+    /**
+     * Vista de Carros.
+     */
+    const CarroDOM = {
+        renderizar() {
+            Sistema.aplicarLayout('Carro');
+        }
+    };
+
+    /**
+     * Modal con la lista de notebooks de un carro.
+     * Clic en fila → editar notebook; botón 🗑 → eliminar notebook.
+     */
+    const CarroNotebooksModal = {
+        _carro: null,
+
+        instancia() {
+            return document.getElementById('carro-notebooks-dialog');
+        },
+
+        /**
+         * Abre la lista cargando los notebooks frescos desde el backend.
+         * @param {string} nombreCarro - nombre del carro (columna Carro)
+         */
+        async abrir(nombreCarro) {
+            const dialogo = this.instancia();
+            if (!dialogo) return;
+
+            this._carro = nombreCarro;
+            document.getElementById('carro-nb-title').textContent = `Notebooks de ${nombreCarro}`;
+            document.getElementById('carro-nb-body').innerHTML =
+                '<p class="dialog-text">Cargando notebooks...</p>';
+
+            if (!dialogo.open) dialogo.showModal();
+
+            try {
+                await Sistema._cargarEntidad('Notebook');
+                this._renderizar();
+            } catch (err) {
+                console.error('Error cargando notebooks del carro:', err);
+                document.getElementById('carro-nb-body').innerHTML =
+                    '<p class="dialog-text">No se pudieron cargar los notebooks de este carro.</p>';
+            }
+        },
+
+        _renderizar() {
+            const cuerpo = document.getElementById('carro-nb-body');
+            const col = VISTAS.Notebook.columnas;
+            const cabeceras = ['Posición', 'Marca', 'Modelo', 'Serie', 'Nro Interno', 'Estado'];
+            const columnas = [col.posicion, col.marca, col.modelo, col.serie, col.nroInterno, col.estado];
+
+            const filas = AppState.datos.Notebook.filter(f => f[col.carro] === this._carro);
+
+            if (filas.length === 0) {
+                cuerpo.innerHTML = '<p class="dialog-text">Este carro no tiene notebooks asignados.</p>';
+                return;
+            }
+
+            const puedeEliminar = Sistema.puedeEliminar();
+
+            cuerpo.innerHTML = `
+            <table class="nb-list-table">
+                <thead>
+                    <tr>
+                        ${cabeceras.map(h => `<th>${escapeHtml(h)}</th>`).join('')}
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filas.map(f => `
+                    <tr data-json="${encodeURIComponent(JSON.stringify(f))}" style="cursor: pointer;">
+                        ${columnas.map(i => {
+                            if (i === col.estado) {
+                                return `<td><span class="badge estado-${claseSegura(f[i])}">${escapeHtml(f[i])}</span></td>`;
+                            }
+                            return `<td>${escapeHtml(f[i])}</td>`;
+                        }).join('')}
+                        <td class="acciones-celda text-center">
+                            ${puedeEliminar
+                                ? `<button class="btn-mini btn-delete-nb" data-id="${escapeHtml(f[col.id])}" title="Eliminar"><i class="bi bi-trash"></i></button>`
+                                : ''}
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>`;
+        },
+
+        /**
+         * Abre el modal principal del notebook y deja programado
+         * el regreso a esta lista al cerrarse.
+         */
+        _abrirModalNotebook(accion, payload) {
+            ModalDOM._alCerrar = () => this.abrir(this._carro);
+            ModalDOM.abrir(accion, 'Notebook', payload);
+        },
+
+        inicializar() {
+            const dialogo = this.instancia();
+            if (!dialogo) return;
+
+            dialogo.querySelector('.dialog-close-btn')?.addEventListener('click', () => dialogo.close());
+
+            document.getElementById('carro-nb-body')?.addEventListener('click', (event) => {
+                const btnDelete = event.target.closest('.btn-delete-nb');
+                if (btnDelete) {
+                    event.stopPropagation();
+                    this._abrirModalNotebook('eliminar', btnDelete.getAttribute('data-id'));
+                    return;
+                }
+
+                if (event.target.closest('.acciones-celda')) {
+                    event.stopPropagation();
+                    return;
+                }
+
+                const fila = event.target.closest('tr[data-json]');
+                if (fila) {
+                    try {
+                        const datos = JSON.parse(decodeURIComponent(fila.getAttribute('data-json')));
+                        this._abrirModalNotebook('editar', datos);
+                    } catch (e) {
+                        console.error('No se pudo leer la fila:', e);
+                    }
+                }
+            });
+
+            // Al cerrarse la lista, repinta la tabla de carros (refresca Cantidad)
+            dialogo.addEventListener('close', () => {
+                if (AppState.estadoActual === 'Carro') TablaDOM.refrescar();
+            });
+        }
+    };
+</script>

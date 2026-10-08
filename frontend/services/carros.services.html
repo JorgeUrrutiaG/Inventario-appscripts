@@ -1,0 +1,19 @@
+<script>
+/**
+ * Servicio de datos y CRUD de Carros (hoja Carros).
+ */
+const CarroService = {
+    obtener() {
+        return AppScriptService.obtenerCarros();
+    },
+    guardar(datos) {
+        return AppScriptService._run('guardarNuevoCarro', datos);
+    },
+    editar(id, datos) {
+        return AppScriptService._run('editarCarro', id, datos);
+    },
+    eliminar(id) {
+        return AppScriptService._run('eliminarCarro', id);
+    }
+};
+</script>

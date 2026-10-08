@@ -1,0 +1,19 @@
+<script>
+/**
+ * Servicio de datos y CRUD de Notebooks (hoja Inventario).
+ */
+const NotebookService = {
+    obtener() {
+        return AppScriptService.obtenerNotebooks();
+    },
+    guardar(datos) {
+        return AppScriptService._run('guardarNuevoNotebook', datos);
+    },
+    editar(id, datos) {
+        return AppScriptService._run('editarNotebook', id, datos);
+    },
+    eliminar(id) {
+        return AppScriptService._run('eliminarNotebook', id);
+    }
+};
+</script>

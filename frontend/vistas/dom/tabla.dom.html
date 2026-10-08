@@ -12,109 +12,113 @@
             .replace(/'/g, '&#39;');
     }
 
+    /**
+     * Convierte un valor de celda en una clase CSS segura (badge/marca).
+     */
+    function claseSegura(valor) {
+        return String(valor ?? '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+    }
+
+    /**
+     * Tabla genérica: renderiza la entidad activa (Notebook, Carro o Modelo)
+     * con búsqueda, paginación, edición por clic y eliminación por botón.
+     */
     const TablaDOM = {
-        // Estado interno de la paginación y filtros
         paginaActual: 1,
         filasPorPagina: 14,
         datosFiltradosActuales: [],
-        estadoActual: '', // Estado global de la aplicación (Notebooks, Carros, Modelos)
 
-        // Referencias centralizadas a los elementos del DOM
         elementos: {
             cuerpoTabla: () => document.querySelector('.table-body'),
             cabeceraTabla: () => document.querySelector('.table-head'),
             buscador: () => document.getElementById('buscador'),
-            titulo: () => document.getElementById('titulo'),
             paginador: () => document.getElementById('paginador')
         },
 
         /**
-         * Inicializa los escuchadores fijos del componente tabla
+         * Inicializa los escuchadores fijos del componente tabla.
          */
         inicializar() {
-            this.filasPorPagina = AppState.paginasTabla; // Valor por defecto si no está definido
-            this.estadoActual = AppState.estadoActual; // Valor por defecto si no está definido
-            // 1. Escuchador fijo para la barra de búsqueda (Evento input)
+            this.filasPorPagina = AppState.paginasTabla;
+
+            // 1. Búsqueda global
             this.elementos.buscador()?.addEventListener('input', () => {
                 this.paginaActual = 1;
                 this.aplicarFiltrosYBuscar();
             });
-            this.elementos.cuerpoTabla().innerHTML = '<tr><td colspan="12" style="text-align:center">Cargando datos...</td></tr>';
 
-            // 2. ÚNICO ESCUCHADOR CENTRALIZADO PARA LA BARRA DE HERRAMIENTAS Y ACCIONES
-            // Escuchamos el contenedor general para interceptar cualquier clic interno
-            const contenedorPrincipal = document.querySelector('.table-container');
+            this._mostrarCargando();
 
-            contenedorPrincipal?.addEventListener('click', (event) => {
+            // 2. Único escuchador centralizado (delegación) para la barra de
+            //    herramientas y las acciones de las filas
+            document.querySelector('.table-container')?.addEventListener('click', (event) => {
                 const target = event.target;
 
-                // ==========================================
-                // HERRAMIENTAS SUPERIORES (Header Bar)
-                // ==========================================
-
-                // Caso A: Clic en "Nueva Tarea" (o en su icono/texto interno)
-                // const btnNew = target.closest('.btn-open-new');
-                // if (btnNew) {
-                //     event.preventDefault();
-                //     ModalDOM.abrir('new');
-                //     return; // Frenamos la ejecución aquí
-                // }
-
-                // Caso B: Clic en "Exportar a Excel" (o en su icono interno)
-                const btnExcel = target.closest('.btn-excel');
-                if (btnExcel) {
+                if (target.closest('.btn-excel')) {
                     event.preventDefault();
                     ExcelService.descargar();
                     return;
                 }
 
-                // ==========================================
-                // ACCIONES DE LA GRILLA (Filas / Tbody)
-                // ==========================================
-
-                // Caso C: Clic en el botón mini de CERRAR TICKET
-                const btnClose = target.closest('.btn-close');
-                if (btnClose) {
-                    event.stopPropagation(); // Evita que se active el clic de edición de la fila
-                    const id = btnClose.getAttribute('data-id');
-                    ModalDOM.abrir('close', id);
+                if (target.closest('.btn-open-new')) {
+                    event.preventDefault();
+                    ModalDOM.abrir('crear', AppState.estadoActual);
                     return;
                 }
 
-                // Caso D: Clic en el botón mini de ELIMINAR TICKET
                 const btnDelete = target.closest('.btn-delete');
                 if (btnDelete) {
                     event.stopPropagation();
-                    const id = btnDelete.getAttribute('data-id');
-                    ModalDOM.abrir('delete', id);
+                    ModalDOM.abrir('eliminar', AppState.estadoActual, btnDelete.getAttribute('data-id'));
                     return;
                 }
 
-                // Caso E: Clic en la celda protectora de acciones (evita falsos disparos de edición)
+                const btnEdit = target.closest('.btn-edit');
+                if (btnEdit) {
+                    event.stopPropagation();
+                    const tr = btnEdit.closest('tr[data-json]');
+                    if (tr) {
+                        try {
+                            const datos = JSON.parse(decodeURIComponent(tr.getAttribute('data-json')));
+                            ModalDOM.abrir('editar', AppState.estadoActual, datos);
+                        } catch (e) {
+                            console.error('No se pudo leer la fila:', e);
+                        }
+                    }
+                    return;
+                }
+
                 if (target.closest('.acciones-celda')) {
                     event.stopPropagation();
                     return;
                 }
 
-                // Caso F: Clic en cualquier otra celda de la fila (Abre Modo Edición / Actualizar)
-                const fila = target.closest('tbody tr'); // Específico de las filas de datos
+                // Clic en la fila → acción configurada por vista
+                const fila = target.closest('tbody tr[data-json]');
                 if (fila) {
-                    const datosRaw = fila.getAttribute('data-json');
-                    if (datosRaw) {
-                        const datosFila = JSON.parse(decodeURIComponent(datosRaw));
-                        ModalDOM.abrir('update', datosFila);
+                    try {
+                        const datos = JSON.parse(decodeURIComponent(fila.getAttribute('data-json')));
+                        const config = VISTAS[AppState.estadoActual];
+
+                        if (config.filaClick === 'notebooks') {
+                            const nombreCarro = datos[VISTAS.Carro.columnas.carro];
+                            if (nombreCarro) CarroNotebooksModal.abrir(nombreCarro);
+                        } else {
+                            ModalDOM.abrir('editar', AppState.estadoActual, datos);
+                        }
+                    } catch (e) {
+                        console.error('No se pudo leer la fila:', e);
                     }
                 }
             });
 
-            // 3. Escuchador centralizado para el PAGINADOR inférieur
+            // 3. Paginador
             this.elementos.paginador()?.addEventListener('click', (event) => {
                 const boton = event.target.closest('.btn-pagina');
                 if (!boton) return;
 
                 event.preventDefault();
                 const nuevaPagina = parseInt(boton.getAttribute('data-pagina'), 10);
-
                 if (!isNaN(nuevaPagina)) {
                     this.paginaActual = nuevaPagina;
                     this.renderizar(this.datosFiltradosActuales);
@@ -122,89 +126,99 @@
             });
         },
 
+        _mostrarCargando(mensaje = 'Cargando datos...') {
+            const cuerpo = this.elementos.cuerpoTabla();
+            if (cuerpo) {
+                cuerpo.innerHTML = `<tr><td colspan="15" style="text-align:center">${escapeHtml(mensaje)}</td></tr>`;
+            }
+        },
+
         /**
-         * Orquesta la petición al backend y la primera renderización
+         * Recarga la tabla desde cero (vuelve a la página 1).
          */
-        cargarNotebooks() {
-            this.elementos.cuerpoTabla().innerHTML = '<tr><td colspan="12" style="text-align:center">Cargando datos...</td></tr>';
+        refrescar() {
             this.paginaActual = 1;
             this.aplicarFiltrosYBuscar();
         },
+
         /**
-         * Filtra el arreglo global basado en el estado y la búsqueda por texto
+         * Construye las filas de la vista activa (incluida la columna
+         * calculada "Cantidad") y aplica el filtro de búsqueda.
          */
         aplicarFiltrosYBuscar() {
+            const { cabeceras, filas } = Sistema.filasVista(AppState.estadoActual);
             const textoBusqueda = this.elementos.buscador()?.value.toLowerCase().trim() || '';
 
-            let resultado = AppState.datosNotebooks; // Usamos el arreglo global de notebooks
-            if (this.estadoActual !== 'Notebooks') {
-                resultado = AppState.datosNotebooks.filter(fila => fila[3] === this.estadoActual);
-            }
-
+            let resultado = filas;
             if (textoBusqueda !== '') {
-                resultado = resultado.filter(fila => {
-                    return fila.some(celda => {
-                        if (celda === null || celda === undefined) return false;
-                        return celda.toString().toLowerCase().includes(textoBusqueda);
-                    });
-                });
+                resultado = resultado.filter(fila =>
+                    fila.some(celda =>
+                        celda !== null && celda !== undefined &&
+                        String(celda).toLowerCase().includes(textoBusqueda)
+                    )
+                );
             }
 
-            this.renderizar(resultado);
+            this.renderizar(resultado, cabeceras);
         },
+
         /**
-     * Construye el HTML dinámico de la tabla utilizando atributos de datos seguros
-     */
-        renderizar(filas) {
-            // LIMPIEZA COMPLEMENTARIA: Borra el cuadro de métricas si venimos de la pantalla de Control
-            if (this.estadoActual !== 'Notebooks') {
-                document.querySelector('.metrics-grid')?.remove();
-            }
-
-            // 2. RESTAURACIÓN DE TU LAYOUT REAL:
-            // Volver a mostrar la barra de botones completa para las vistas normales
-            const barraBotones = document.querySelector('.btns-bar');
-            if (barraBotones) barraBotones.style.display = 'flex'; // Cambiado a flex para mantener su alineación nativa
-
+         * Construye el HTML de la tabla con atributos de datos seguros.
+         */
+        renderizar(filas, cabeceras = null) {
+            const entidad = AppState.estadoActual;
+            const config = VISTAS[entidad];
             const thead = this.elementos.cabeceraTabla();
             const tbody = this.elementos.cuerpoTabla();
             if (!thead || !tbody) return;
 
+            if (!cabeceras) cabeceras = Sistema.filasVista(entidad).cabeceras;
             this.datosFiltradosActuales = filas;
-            thead.innerHTML = `<tr>${AppState.cabecerasNotebooks.map(h => `<th>${escapeHtml(h)}</th>`).join('')}<th>Año uso</th><th class='text-center'>Acciones</th></tr>`;
+
+            thead.innerHTML = `<tr>${cabeceras.map(h => `<th>${escapeHtml(h)}</th>`).join('')}
+                <th class="text-center">Acciones</th></tr>`;
 
             if (filas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${AppState.cabecerasNotebooks.length + 1}" style="text-align:center; padding: 20px; color: #6b7280;">No se encontraron tickets coordinados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${cabeceras.length + 1}"
+                    style="text-align:center; padding: 20px; color: #6b7280;">
+                    No se encontraron registros.</td></tr>`;
                 this.renderizarControlesPaginacion();
                 return;
             }
 
             const inicio = (this.paginaActual - 1) * this.filasPorPagina;
-            const fin = inicio + this.filasPorPagina;
-            const filasPagina = filas.slice(inicio, fin);
+            const filasPagina = filas.slice(inicio, inicio + this.filasPorPagina);
+            const puedeEliminar = Sistema.puedeEliminar();
+            const puedeEscribir = Sistema.puedeEscribir();
+            // Carro muestra botón de edición; Notebook y Modelo muestran eliminación
+            const mostrarEdicion = config.acciones === 'editar';
 
-            tbody.innerHTML = filasPagina.map((fila) => {
-                const idTarea = escapeHtml(fila[0]);
-                const estado = String(fila[3] || '');
-
-                // Codificamos el JSON de la fila para evitar que caracteres especiales rompan el HTML alternativo
+            tbody.innerHTML = filasPagina.map(fila => {
+                const id = fila[config.columnas.id];
                 const filaJsonSeguro = encodeURIComponent(JSON.stringify(fila));
 
-                return `
-                <tr data-json="${filaJsonSeguro}" class='text-center' style="cursor: pointer;"> 
-                    ${fila.map((celda, i) => {
-                        console.log("Renderizando celda:", celda, "en columna:", i,"fila:", fila);
-                    if (i === 2) return `<td class='text-center'><span class="marca-${escapeHtml(String(celda).toLowerCase())}">${escapeHtml(celda)}</span></td>`;
-                    if (i === 11) return `<td class='text-center'><span class="badge estado-${escapeHtml(String(celda).toLowerCase())}">${escapeHtml(celda)}</span></td>`;
+                let acciones = '';
+                if (mostrarEdicion) {
+                    if (puedeEscribir) {
+                        acciones = `<button class="btn-mini btn-edit" data-id="${escapeHtml(id)}" title="Editar"><i class="bi bi-pencil"></i></button>`;
+                    }
+                } else if (puedeEliminar) {
+                    acciones = `<button class="btn-mini btn-delete" data-id="${escapeHtml(id)}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+                }
 
-                    return `<td>${escapeHtml(celda)}</td>`;
-                }).join('')}
-                    <td class='text-center'>${new Date().getFullYear()-fila[9]}</td>
+                return `
+                <tr data-json="${filaJsonSeguro}" class="text-center" style="cursor: pointer;">
+                    ${fila.map((celda, i) => {
+                        if (i === config.marcaCol && String(celda).trim() !== '') {
+                            return `<td class="text-center"><span class="marca-${claseSegura(celda)}">${escapeHtml(celda)}</span></td>`;
+                        }
+                        if (i === config.estadoCol && String(celda).trim() !== '') {
+                            return `<td class="text-center"><span class="badge estado-${claseSegura(celda)}">${escapeHtml(celda)}</span></td>`;
+                        }
+                        return `<td>${escapeHtml(celda)}</td>`;
+                    }).join('')}
                     <td class="acciones-celda text-center">
-                        <div>
-                            ${estado === 'Abierta' ? `<button class="btn-mini btn-close" data-id="${idTarea}" title="Cerrar Tarea"><i class="bi bi-unlock"></i></button>` : '<i class="bi bi-lock tarea-cerrada btn-lock"></i>'}
-                            <button class="btn-mini btn-delete" data-id="${idTarea}" title="Eliminar"><i class="bi bi-trash"></i></button>
-                        </div>
+                        <div>${acciones}</div>
                     </td>
                 </tr>`;
             }).join('');
@@ -213,63 +227,49 @@
         },
 
         /**
-         * Dibuja los botones del paginador inferior de forma dinámica
+         * Dibuja los botones del paginador inferior.
          */
         renderizarControlesPaginacion() {
             const paginador = this.elementos.paginador();
             if (!paginador) return;
 
-            paginador.innerHTML = "";
+            paginador.innerHTML = '';
             const totalPaginas = Math.ceil(this.datosFiltradosActuales.length / this.filasPorPagina);
-
             if (totalPaginas <= 1) return;
 
             const maxBotonesVisibles = 5;
             let paginaInicio = Math.max(1, this.paginaActual - Math.floor(maxBotonesVisibles / 2));
             let paginaFin = Math.min(totalPaginas, paginaInicio + maxBotonesVisibles - 1);
-
             if (paginaFin - paginaInicio + 1 < maxBotonesVisibles) {
                 paginaInicio = Math.max(1, paginaFin - maxBotonesVisibles + 1);
             }
 
-
-
-            // --- FUNCIÓN INTERNA: Crea un botón limpio con atributos data ---
             const crearBoton = (numero) => {
-                const boton = document.createElement("button");
+                const boton = document.createElement('button');
                 boton.textContent = numero;
-                boton.classList.add("btn-pagina");
-                boton.setAttribute('data-pagina', numero); // Guardamos la página aquí
-
-                if (numero === this.paginaActual) {
-                    boton.classList.add("activo");
-                }
+                boton.classList.add('btn-pagina');
+                boton.setAttribute('data-pagina', numero);
+                if (numero === this.paginaActual) boton.classList.add('activo');
                 paginador.appendChild(boton);
             };
 
-            const crearPuntosSuspensivos = () => {
-                const span = document.createElement("span");
-                span.textContent = "...";
-                span.style.padding = "8px 12px";
-                span.style.color = "#6b7280";
+            const crearPuntos = () => {
+                const span = document.createElement('span');
+                span.textContent = '...';
+                span.style.padding = '8px 12px';
+                span.style.color = '#6b7280';
                 paginador.appendChild(span);
             };
 
             if (paginaInicio > 1) {
                 crearBoton(1);
-                if (paginaInicio > 2) crearPuntosSuspensivos();
+                if (paginaInicio > 2) crearPuntos();
             }
-
-            for (let i = paginaInicio; i <= paginaFin; i++) {
-                crearBoton(i);
-            }
-
+            for (let i = paginaInicio; i <= paginaFin; i++) crearBoton(i);
             if (paginaFin < totalPaginas) {
-                if (paginaFin < totalPaginas - 1) crearPuntosSuspensivos();
+                if (paginaFin < totalPaginas - 1) crearPuntos();
                 crearBoton(totalPaginas);
             }
         }
     };
-
-
 </script>

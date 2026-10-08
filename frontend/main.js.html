@@ -1,48 +1,195 @@
 <script>
-    // Estado global centralizado de la aplicación
+    // ============================================================
+    // ESTADO GLOBAL CENTRALIZADO
+    // ============================================================
     const AppState = {
-        datosNotebooks: [],        // Filas de la tabla (Registros)
-        cabecerasNotebooks: [],
-        datosCarros: [[1, 'C1', 'Almacén A', 'Activo', '10 Notebooks', 'Juan Pérez'],
-        [2, 'C2', 'Almacén B', 'Activo', '5 Notebooks', 'María López'],
-        [3, 'C3', 'Almacén C', 'Inactivo', '0 Notebooks', 'Carlos García']
-        ],
-        cabecerasCarros: ['Id', 'Carro', 'Ubicación', 'Estado', 'Carga', 'Responsable'],
-        datosModelos: [[1, 'Acer', 'Aspire', 'Negro', 'Intel i5', false, true, '15.6"', '8GB', '10', 2020]],
-        cabecerasModelos: ['Id', 'Dispositivo', 'Marca', 'Modelo', 'Color', 'Procesador', 'Touch', 'LAN', 'Pantalla', 'RAM', 'Windows', 'Año'],
-        estadoActual: 'Notebooks',
-        paginasTabla: 14 // Encabezados de la tabla
+        estadoActual: 'Notebook',                     // 'Notebook' | 'Carro' | 'Modelo'
+        usuario: { email: '', nombre: '', perfil: '', autorizado: false },
+        datos: { Notebook: [], Carro: [], Modelo: [] },
+        cabeceras: { Notebook: [], Carro: [], Modelo: [] },
+        metricas: { notebooks: 0, malos: 0, carros: 0, modelos: 0 },
+        paginasTabla: 14
     };
 
-    // Escuchar el evento de carga del navegador
-    document.addEventListener('DOMContentLoaded', () => {
-        // 1. Inicializar componentes estáticos de la interfaz gráfica (Fijos en el DOM)
-        TopbarDOM.inicializar();      // <-- Este ya maneja internamente el botón #go-home-btn
-        NavigationDOM.inicializar();
-        NotebookDOM.inicializar()
-        TablaDOM.inicializar();
-        ModalDOM.inicializar();
-
-        // 2. Arrancar la carga asíncrona de datos desde Google Sheets
-        iniciarSistema();
-    });
-
-    /**
-     * Orquestador de arranque del sistema.
-     * Carga de forma asíncrona y en paralelo la información del usuario y la tabla principal.
-     */
-    async function iniciarSistema() {
-        try {
-            await Promise.all([
-                UserDOM.cargarInformacion(),
-                NotebookDOM.renderizar(),
-                TablaDOM.cargarNotebooks()
-            ]);
-        } catch (err) {
-            console.error("Error crítico durante la inicialización:", err);
-            if (typeof showToast === 'function') {
-                showToast('error', 'Error al sincronizar los datos iniciales de la aplicación.');
+    // ============================================================
+    // CONFIGURACIÓN DE VISTAS (títulos, columnas, servicios)
+    // ============================================================
+    const VISTAS = {
+        Notebook: {
+            titulo: 'NOTEBOOKS',
+            conMetricas: true,
+            conCantidad: false,
+            dom: NotebookDOM,
+            servicio: NotebookService,
+            marcaCol: 2,
+            estadoCol: 12,
+            columnas: {
+                id: 0, posicion: 1, marca: 2, modelo: 3, ram: 4, pantalla: 5,
+                serie: 6, windows: 7, nroInterno: 8, anioCompra: 9, carro: 10,
+                anioUso: 11, estado: 12, observacion: 13
+            }
+        },
+        Carro: {
+            titulo: 'CARROS',
+            conMetricas: false,
+            conCantidad: true,
+            dom: CarroDOM,
+            servicio: CarroService,
+            marcaCol: -1,
+            estadoCol: 3,
+            filaClick: 'notebooks',
+            acciones: 'editar',
+            columnas: { id: 0, carro: 1, ubicacion: 2, estado: 3, carga: 4, responsable: 5 }
+        },
+        Modelo: {
+            titulo: 'MODELOS',
+            conMetricas: false,
+            conCantidad: true,
+            dom: ModeloDOM,
+            servicio: ModeloService,
+            marcaCol: 2,
+            estadoCol: -1,
+            columnas: {
+                id: 0, dispositivo: 1, marca: 2, modelo: 3, color: 4, procesador: 5,
+                touch: 6, lan: 7, pantalla: 8, ram: 9, windows: 10, anio: 11
             }
         }
-    }
+    };
+
+    // ============================================================
+    // SISTEMA: orquestación de carga, vistas y permisos
+    // ============================================================
+    const Sistema = {
+
+        // ---------- Permisos ----------
+        puedeEscribir() {
+            return AppState.usuario.perfil === 'Informático' ||
+                AppState.usuario.perfil === 'Supervisor';
+        },
+
+        puedeEliminar() {
+            return AppState.usuario.perfil === 'Supervisor';
+        },
+
+        actualizarPermisosUI() {
+            const btnNuevo = document.querySelector('.btn-open-new');
+            if (btnNuevo) btnNuevo.classList.toggle('oculto', !this.puedeEscribir());
+            if (AppState.estadoActual) {
+                TablaDOM.renderizar(TablaDOM.datosFiltradosActuales);
+            }
+        },
+
+        // ---------- Datos ----------
+        async _cargarEntidad(entidad) {
+            const data = await VISTAS[entidad].servicio.obtener();
+            AppState.cabeceras[entidad] = data.cabeceras || [];
+            AppState.datos[entidad] = data.filas || [];
+        },
+
+        async _cargarMetricas() {
+            AppState.metricas = await AppScriptService.obtenerMetricas();
+        },
+
+        /**
+         * Devuelve { cabeceras, filas } de una vista, con la columna
+         * calculada "Cantidad" cuando corresponde (Carro / Modelo).
+         */
+        filasVista(entidad) {
+            const config = VISTAS[entidad];
+            const cabeceras = [...AppState.cabeceras[entidad]];
+            const filas = AppState.datos[entidad].map(fila => [...fila]);
+
+            if (config.conCantidad) {
+                cabeceras.push('Cantidad');
+                filas.forEach(fila => fila.push(this._cantidad(entidad, fila)));
+            }
+            return { cabeceras, filas };
+        },
+
+        _cantidad(entidad, fila) {
+            const notebooks = AppState.datos.Notebook;
+            const colNb = VISTAS.Notebook.columnas;
+            if (entidad === 'Carro') {
+                const nombreCarro = fila[VISTAS.Carro.columnas.carro];
+                return notebooks.filter(nb => nb[colNb.carro] === nombreCarro).length;
+            }
+            const marca = fila[VISTAS.Modelo.columnas.marca];
+            const modelo = fila[VISTAS.Modelo.columnas.modelo];
+            return notebooks.filter(nb => nb[colNb.marca] === marca && nb[colNb.modelo] === modelo).length;
+        },
+
+        // ---------- Vistas ----------
+        cambiarVista(entidad) {
+            AppState.estadoActual = entidad;
+            VISTAS[entidad].dom.renderizar();
+            TablaDOM.refrescar();
+        },
+
+        aplicarLayout(entidad) {
+            const config = VISTAS[entidad];
+
+            const titulo = document.getElementById('titulo');
+            if (titulo) titulo.innerText = config.titulo;
+
+            if (!config.conMetricas) {
+                document.querySelector('.metrics-grid')?.remove();
+            }
+
+            // La tabla se encoge solo cuando el panel de métricas está visible
+            document.querySelector('.table-container')?.classList.toggle('notebooks-view', config.conMetricas);
+
+            const barraBotones = document.querySelector('.btns-bar');
+            if (barraBotones) barraBotones.style.display = 'flex';
+        },
+
+        /**
+         * Recarga los datos de una entidad y repinta la vista si está activa.
+         */
+        async recargarEntidad(entidad) {
+            await Promise.all([
+                this._cargarEntidad(entidad),
+                this._cargarMetricas()
+            ]);
+            if (AppState.estadoActual === entidad) {
+                VISTAS[entidad].dom.renderizar();
+                TablaDOM.refrescar();
+            }
+        },
+
+        async recargarVistaActual() {
+            showToast('info', 'Actualizando datos...');
+            await this.recargarEntidad(AppState.estadoActual);
+        },
+
+        // ---------- Arranque ----------
+        async iniciar() {
+            try {
+                await Promise.all([
+                    UserDOM.cargarInformacion(),
+                    this._cargarMetricas(),
+                    this._cargarEntidad('Notebook'),
+                    this._cargarEntidad('Carro'),
+                    this._cargarEntidad('Modelo')
+                ]);
+                this.cambiarVista(AppState.estadoActual);
+            } catch (err) {
+                console.error('Error crítico durante la inicialización:', err);
+                showToast('error', 'Error al sincronizar los datos iniciales de la aplicación.');
+                TablaDOM.renderizar([]);
+            }
+        }
+    };
+
+    // ============================================================
+    // ARRANQUE DE LA APLICACIÓN
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        TopbarDOM.inicializar();
+        NavigationDOM.inicializar();
+        TablaDOM.inicializar();
+        ModalDOM.inicializar();
+        CarroNotebooksModal.inicializar();
+
+        Sistema.iniciar();
+    });
 </script>

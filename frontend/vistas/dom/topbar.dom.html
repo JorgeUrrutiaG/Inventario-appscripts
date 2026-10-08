@@ -1,22 +1,17 @@
 <script>
+    /**
+     * Barra superior: botón de actualización de la vista activa.
+     */
     const TopbarDOM = {
         elementos: {
             btnActualizar: () => document.getElementById('go-home-btn')
         },
 
-        /**
-         * Inicializa los escuchadores de eventos fijos de la barra superior. 
-         */
         inicializar() {
             this.elementos.btnActualizar()?.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Llamamos de forma limpia al método de recarga de la tabla
-                TablaDOM.cargarTareas();
+                Sistema.recargarVistaActual();
             });
-        },
-        obtenerClick(){
-            console.log("Futura accion");
         }
     };
-  
 </script>

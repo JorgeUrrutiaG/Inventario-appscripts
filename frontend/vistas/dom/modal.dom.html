@@ -1,73 +1,168 @@
 <script>
+    /**
+     * Modal único (dialog nativo) para crear, editar y eliminar registros.
+     */
     const ModalDOM = {
-        // Elemento nativo HTMLDialogElement asignado al inicializar
-        _instancia: document.querySelector('dialog'),
+        _accion: null,
+        _entidad: null,
+        _fila: null,
+        _id: null,
+        _alCerrar: null,
 
         /**
-         * Abre la ventana modal configurando dinámicamente títulos, cuerpo y botones.
+         * Referencia perezosa al elemento <dialog> del layout.
          */
-        abrir(accion, datosEditar = null) {
-            const title = document.getElementById("dialog-title");
-            const bodyDialog = document.getElementById('dialog-body');
-            const footerDialog = document.getElementById('dialog-footer');
-            let idTarget = null;
-            // Extraemos el ID numérico de forma segura para los botones de eliminar/cerrar
-            if (accion === 'close' || accion === 'delete') {
-                idTarget = datosEditar;
-            } else if (accion === 'update') {
-                idTarget = datosEditar[0];
-            }
-
-           // Botones actualizados apuntando a los nuevos contenedores DOM nativos
-            const BOTONES = {
-                cancel: '<button type="button" class="btn bg-gray" id="dialog-cancel-btn">Cancelar</button>',
-                delete: `<button type="button" class="btn bg-red" id="confirm-delete-btn" onclick="TaskDOM.eliminar(${idTarget})">Borrar</button>`,
-                save: '<button type="button" class="btn bg-green" id="dialog-save-btn" onclick="TaskDOM.guardar()">Guardar</button>',
-                print: '<button type="button" class="btn bg-marron" id="dialog-print-btn">Imprimir</button>',
-                close: `<button type="button" class="btn bg-red" id="confirm-close-btn" onclick="TaskDOM.cerrar(${idTarget})">Cerrar</button>`,
-            };
-
-            const MODAL_CONFIGS = {
-                new: { title: "Nuevo Formulario", classAdd: "dialog-form", classRemove: "dialog-delete", btnConfirm: "save" },
-                update: { title: `Actualizar Registro #${idTarget}`, classAdd: "dialog-form", classRemove: "dialog-delete", btnConfirm: "save" },
-                delete: { title: "Confirmación", classAdd: "dialog-delete", classRemove: "dialog-form", btnConfirm: "delete" },
-                read: { title: "Ver Registro", classAdd: "dialog-form", classRemove: "dialog-delete", btnConfirm: "print" },
-                close: { title: "Confirmación de Cierre", classAdd: "dialog-delete", classRemove: "dialog-form", btnConfirm: "close" }
-            };
-
-            const config = MODAL_CONFIGS[accion];
-            if (!config) return;
-
-            title.innerHTML = config.title;
-            bodyDialog.innerHTML = FormDOM.obtenerTemplate(accion); // Consumimos desde FormDOM
-
-            // Gestión limpia de clases CSS
-            this._instancia.classList.replace(config.classRemove, config.classAdd) || this._instancia.classList.add(config.classAdd);
-            footerDialog.innerHTML = BOTONES.cancel + (BOTONES[config.btnConfirm] || "");
-
-            // Evento para el botón cancelar recién inyectado
-            document.getElementById('dialog-cancel-btn')?.addEventListener("click", (e) => {
-                e.preventDefault();
-                this._instancia.close();
-            });
-
-            // Si es edición, delegamos el llenado a FormDOM
-            if (accion === "update" && datosEditar) {
-                FormDOM.rellenar(datosEditar);
-            }
-
-            this._instancia.showModal();
+        instancia() {
+            return document.getElementById('main-dialog');
         },
 
         /**
-         * Inicializa escuchadores globales fijos (como la "X" de cierre de la esquina)
+         * Abre el modal según la acción: 'crear' | 'editar' | 'eliminar'.
+         * @param {string} accion
+         * @param {string} entidad - 'Notebook' | 'Carro' | 'Modelo'
+         * @param {*} payload - fila de datos (editar) o id (eliminar)
+         */
+        abrir(accion, entidad, payload = null) {
+            const dialogo = this.instancia();
+            if (!dialogo) return;
+
+            this._accion = accion;
+            this._entidad = entidad;
+            this._fila = accion === 'editar' ? payload : null;
+            this._id = accion === 'eliminar' ? payload
+                : accion === 'editar' ? payload[VISTAS[entidad].columnas.id]
+                    : null;
+
+            const configuraciones = {
+                crear: { titulo: `Nuevo ${entidad}`, clase: 'dialog-form' },
+                editar: { titulo: `Editar ${entidad} #${this._id}`, clase: 'dialog-form' },
+                eliminar: { titulo: `Eliminar ${entidad}`, clase: 'dialog-delete' }
+            };
+            const config = configuraciones[accion];
+            if (!config) return;
+
+            document.getElementById('dialog-title').textContent = config.titulo;
+            document.getElementById('dialog-body').innerHTML =
+                accion === 'eliminar'
+                    ? `<p class="dialog-text">¿Estás seguro de eliminar el registro #${escapeHtml(this._id)}? Esta acción no se puede deshacer.</p>`
+                    : FormDOM.obtenerTemplate(entidad, accion);
+
+            dialogo.classList.remove('dialog-form', 'dialog-delete');
+            dialogo.classList.add(config.clase);
+
+            if (accion === 'editar') FormDOM.rellenar(entidad, this._fila);
+
+            this._renderizarBotones();
+            dialogo.showModal();
+        },
+
+        /**
+         * Dibuja los botones del pie del modal y les asigna sus eventos.
+         */
+        _renderizarBotones() {
+            const footer = document.getElementById('dialog-footer');
+            const esEliminar = this._accion === 'eliminar';
+
+            footer.innerHTML = `
+                <button type="button" class="btn bg-gray" id="dialog-cancel-btn">Cancelar</button>
+                <button type="button" class="btn ${esEliminar ? 'bg-red' : 'bg-green'}" id="dialog-confirm-btn">
+                    ${esEliminar ? 'Eliminar' : 'Guardar'}
+                </button>`;
+
+            document.getElementById('dialog-cancel-btn')
+                .addEventListener('click', () => this.cerrar());
+
+            document.getElementById('dialog-confirm-btn')
+                .addEventListener('click', () => {
+                    if (esEliminar) this.eliminar();
+                    else this.guardar();
+                });
+        },
+
+        cerrar() {
+            this.instancia()?.close();
+            this._notificarCierre();
+        },
+
+        /**
+         * Ejecuta (y limpia) el callback pendiente tras cerrarse el modal.
+         */
+        _notificarCierre() {
+            const callback = this._alCerrar;
+            this._alCerrar = null;
+            if (typeof callback === 'function') callback();
+        },
+
+        /**
+         * Valida, envía y recarga los datos de la entidad.
+         */
+        async guardar() {
+            const formulario = document.getElementById('dialog-form');
+            if (formulario && !formulario.checkValidity()) {
+                formulario.reportValidity();
+                return;
+            }
+
+            const boton = document.getElementById('dialog-confirm-btn');
+            const datos = FormDOM.leer();
+            const entidad = this._entidad;
+            const servicio = VISTAS[entidad].servicio;
+            const esCreacion = this._accion === 'crear';
+
+            boton.disabled = true;
+            boton.innerText = 'Guardando...';
+
+            try {
+                const mensaje = esCreacion
+                    ? await servicio.guardar(datos)
+                    : await servicio.editar(this._id, datos);
+                this.cerrar();
+                showToast('success', mensaje);
+                await Sistema.recargarEntidad(entidad);
+            } catch (err) {
+                showToast('error', err.message || 'No se pudo guardar el registro');
+            } finally {
+                boton.disabled = false;
+                boton.innerText = esCreacion ? 'Guardar' : 'Guardar';
+            }
+        },
+
+        /**
+         * Confirma la eliminación del registro.
+         */
+        async eliminar() {
+            const boton = document.getElementById('dialog-confirm-btn');
+            const entidad = this._entidad;
+            const servicio = VISTAS[entidad].servicio;
+            const id = this._id;
+
+            boton.disabled = true;
+            boton.innerText = 'Eliminando...';
+
+            try {
+                const mensaje = await servicio.eliminar(id);
+                this.cerrar();
+                showToast('success', mensaje);
+                await Sistema.recargarEntidad(entidad);
+            } catch (err) {
+                this.cerrar();
+                showToast('error', err.message || 'No se pudo eliminar el registro');
+            } finally {
+                boton.disabled = false;
+                boton.innerText = 'Eliminar';
+            }
+        },
+
+        /**
+         * Escuchadores fijos del modal (botón X de cierre y tecla Escape).
          */
         inicializar() {
-            document.querySelector('.dialog-close-btn')?.addEventListener("click", (e) => {
+            document.querySelector('#main-dialog .dialog-close-btn')?.addEventListener('click', (e) => {
                 e.preventDefault();
-                this._instancia.close();
+                this.cerrar();
             });
+
+            this.instancia()?.addEventListener('cancel', () => this._notificarCierre());
         }
     };
-   
 </script>

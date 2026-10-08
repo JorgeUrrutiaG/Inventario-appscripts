@@ -1,6 +1,8 @@
 <script>
+    /**
+     * Adaptador central de comunicación con Apps Script (google.script.run).
+     */
     const AppScriptService = {
-        // Función interna para no repetir código de promesas
         _run(nombreFuncion, ...args) {
             return new Promise((resolve, reject) => {
                 google.script.run
@@ -9,27 +11,24 @@
             });
         },
 
+        obtenerUsuarioLogueado() {
+            return this._run('obtenerUsuarioLogueado');
+        },
+
+        obtenerMetricas() {
+            return this._run('obtenerMetricas');
+        },
+
         obtenerNotebooks() {
             return this._run('obtenerNotebooksBackend');
         },
 
-        // guardarTarea(datos, funcionBackend) {
-        //     return this._run(funcionBackend, datos);
-        // },
-
-        // cerrarTarea(id) {
-        //     return this._run('cerrarTareaBackend', id);
-        // },
-
-        // eliminarTarea(id) {
-        //     return this._run('eliminarTareaBackend', id);
-        // },
-
-        obtenerUsuarioLogueado() {
-            return this._run('obtenerUsuarioLogueado');
+        obtenerCarros() {
+            return this._run('obtenerCarrosBackend');
         },
-        
+
+        obtenerModelos() {
+            return this._run('obtenerModelosBackend');
+        }
     };
-
-
 </script>

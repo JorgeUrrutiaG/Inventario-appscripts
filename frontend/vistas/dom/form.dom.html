@@ -1,117 +1,356 @@
 <script>
+    /**
+     * Plantillas de formularios por entidad (Notebook, Carro, Modelo).
+     * Los `name` coinciden con las claves que espera el backend.
+     */
     const FormDOM = {
-        // Template base del formulario compartido
-        _bodyForm: `
-        <form name="form" class="form" id="dialog-form">
+
+        _inputId(valor = '') {
+            return `
             <div class="form-row oculto" id="rowId">
                 <div class="col-6">
                     <div class="input-group">
                         <span class="input-group-text fw-bold">ID</span>
-                        <input type="text" id="id" name="id" class="form-control" readonly/>
+                        <input type="text" id="id" name="id" class="form-control" value="${escapeHtml(valor)}" readonly/>
                     </div>
                 </div>
-            </div>
-            <div class="form-row">
-                <div class="col-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                        <div class="form-floating">
-                            <input type="date" name="fecha" id="fecha" class="form-control" placeholder=" " required />
-                            <label for="fecha">Fecha Solicitud</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="col-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
-                        <div class="form-floating">
-                            <select class="form-select" name="prioridad" id="prioridad">
-                                <option>Urgente</option>
-                                <option>Alta</option>
-                                <option selected>Media</option>
-                                <option>Baja</option>
-                            </select>
-                            <label for="prioridad">Prioridad</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="col-12">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="tarea" name="tarea" placeholder=" " required>
-                            <label for="tarea">Tarea</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="col-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="solicitante" name="solicitante" placeholder="" required>
-                            <label for="solicitante">Solicitante</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-pc-display"></i></span>
-                        <div class="form-floating">
-                            <select class="form-select" name="plataforma" id="plataforma" required>
-                                <option value="" disabled>Seleccione...</option>
-                                <option selected>No Aplica</option>                                
-                                <option>Gmail</option>
-                                <option>DIA</option>
-                                <option>Aptus</option>
-                                <option>Canvas</option>
-                                <option>Lirmi</option>
-                                <option>Umáximo</option>
-                                <option>Ziemax</option>
-                            </select>
-                            <label for="plataforma">Plataforma</label>
-                        </div>
-                    </div>
-                </div>
-            </div>    
-        </form>`,
+            </div>`;
+        },
 
-        /**
-         * Retorna la plantilla HTML según la acción requerida
-         */
-        obtenerTemplate(accion) {
-            const templates = {
-                new: this._bodyForm,
-                update: this._bodyForm,
-                delete: `<p class="dialog-text">¿Estás seguro de borrar el registro?</p>`,
-                read: "<p>Ver registro</p>",
-                close: `<p class="dialog-text">¿Estás seguro de cerrar la Tarea?</p>`,
-            };
-            return templates[accion] || "";
+        _select(nombre, opciones, valorDefecto = '') {
+            const items = opciones.map(op => {
+                const seleccionado = String(op) === String(valorDefecto) ? 'selected' : '';
+                return `<option ${seleccionado}>${escapeHtml(op)}</option>`;
+            }).join('');
+            return `<select class="form-select" name="${nombre}" id="${nombre}">${items}</select>`;
+        },
+
+        _opcionesCarros() {
+            return AppState.datos.Carro.map(fila => fila[1]).filter(Boolean);
+        },
+
+        _templateNotebook(modo) {
+            const anioLectura = modo === 'editar' ? 'readonly' : '';
+            return `
+            <form name="form" class="form" id="dialog-form">
+                ${this._inputId()}
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="number" name="posicion" id="posicion" class="form-control" placeholder=" " />
+                                <label for="posicion">Posición</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="marca" id="marca" class="form-control" placeholder=" " required />
+                                <label for="marca">Marca</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="modelo" id="modelo" class="form-control" placeholder=" " required />
+                                <label for="modelo">Modelo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="ram" id="ram" class="form-control" placeholder=" " />
+                                <label for="ram">RAM</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="pantalla" id="pantalla" class="form-control" placeholder=" " />
+                                <label for="pantalla">Pantalla</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="serie" id="serie" class="form-control" placeholder=" " />
+                                <label for="serie">Serie</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="windows" id="windows" class="form-control" placeholder=" " />
+                                <label for="windows">Windows</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="nroInterno" id="nroInterno" class="form-control" placeholder=" " />
+                                <label for="nroInterno">Nro Interno</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="number" name="anioCompra" id="anioCompra" class="form-control" placeholder=" " ${anioLectura} />
+                                <label for="anioCompra">Año compra</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                ${this._select('carro', this._opcionesCarros())}
+                                <label for="carro">Carro</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                ${this._select('estado', ['', 'Operativo', 'Malo', 'Semi Operativo', 'Baja'])}
+                                <label for="estado">Estado</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="observacion" id="observacion" class="form-control" placeholder=" " />
+                                <label for="observacion">Observación</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>`;
+        },
+
+        _templateCarro() {
+            const responsables = [...new Set(AppState.datos.Carro.map(f => f[5]).filter(Boolean))];
+            const datalist = `<datalist id="responsables">${responsables.map(r => `<option value="${escapeHtml(r)}">`).join('')}</datalist>`;
+            return `
+            <form name="form" class="form" id="dialog-form">
+                ${this._inputId()}
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="carro" id="carro" class="form-control" placeholder=" " required />
+                                <label for="carro">Nombre Carro</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="ubicacion" id="ubicacion" class="form-control" placeholder=" " />
+                                <label for="ubicacion">Ubicación</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                ${this._select('estado', ['ACTIVO', 'INACTIVO'], 'ACTIVO')}
+                                <label for="estado">Estado</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                ${this._select('carga', ['DIRECTA', 'CICLICA'], 'DIRECTA')}
+                                <label for="carga">Carga</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="responsable" id="responsable" class="form-control" placeholder=" " list="responsables" />
+                                <label for="responsable">Responsable</label>
+                            </div>
+                        </div>
+                        ${datalist}
+                    </div>
+                </div>
+            </form>`;
+        },
+
+        _templateModelo() {
+            return `
+            <form name="form" class="form" id="dialog-form">
+                ${this._inputId()}
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="dispositivo" id="dispositivo" class="form-control" placeholder=" " value="Notebook" />
+                                <label for="dispositivo">Dispositivo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="marca" id="marca" class="form-control" placeholder=" " required />
+                                <label for="marca">Marca</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="modelo" id="modelo" class="form-control" placeholder=" " required />
+                                <label for="modelo">Modelo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="color" id="color" class="form-control" placeholder=" " />
+                                <label for="color">Color</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-12">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="procesador" id="procesador" class="form-control" placeholder=" " />
+                                <label for="procesador">Procesador</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                ${this._select('touch', ['NO', 'SI'], 'NO')}
+                                <label for="touch">Touch</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                ${this._select('lan', ['SI', 'NO'], 'SI')}
+                                <label for="lan">LAN</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="pantalla" id="pantalla" class="form-control" placeholder=" " />
+                                <label for="pantalla">Pantalla</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="ram" id="ram" class="form-control" placeholder=" " />
+                                <label for="ram">RAM</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="text" name="windows" id="windows" class="form-control" placeholder=" " />
+                                <label for="windows">Windows</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <div class="form-floating">
+                                <input type="number" name="anio" id="anio" class="form-control" placeholder=" " />
+                                <label for="anio">Año</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>`;
         },
 
         /**
-         * Rellena dinámicamente los campos del formulario activo
+         * Devuelve la plantilla HTML de la entidad y modo indicados.
          */
-        rellenar(datos) {
-            if (!datos) return;
-            document.getElementById('rowId').classList.remove('oculto');
-            document.getElementById('id').value = datos[0];
-            
-            const partesFecha = datos[1]?.split('/');
-            if (partesFecha?.length === 3) {
-                document.getElementById('fecha').value = `${partesFecha[2]}-${partesFecha[1]}-${partesFecha[0]}`;
-            }
-            
-            document.getElementById('prioridad').value = datos[2];
-            document.getElementById('tarea').value = datos[4];
-            document.getElementById('solicitante').value = datos[5];
-            document.getElementById('plataforma').value = datos[8];
+        obtenerTemplate(entidad, modo) {
+            const templates = {
+                Notebook: () => this._templateNotebook(modo),
+                Carro: () => this._templateCarro(),
+                Modelo: () => this._templateModelo()
+            };
+            const fabrica = templates[entidad];
+            return fabrica ? fabrica() : '';
+        },
+
+        /**
+         * Rellena el formulario activo con los datos de la fila (array por columnas).
+         */
+        rellenar(entidad, fila) {
+            if (!fila) return;
+            const mapa = VISTAS[entidad].columnas;
+            document.getElementById('rowId')?.classList.remove('oculto');
+            const campoId = document.getElementById('id');
+            if (campoId) campoId.value = fila[mapa.id];
+
+            Object.keys(mapa).forEach(nombre => {
+                if (nombre === 'id') return;
+                const elemento = document.getElementById(nombre);
+                if (!elemento) return;
+                const valor = fila[mapa[nombre]] ?? '';
+                if (elemento.tagName === 'SELECT' && valor !== '' &&
+                    ![...elemento.options].some(op => op.value === String(valor))) {
+                    elemento.add(new Option(valor, valor));
+                }
+                elemento.value = valor;
+            });
+        },
+
+        /**
+         * Lee el formulario y devuelve un objeto con los valores.
+         */
+        leer() {
+            const formulario = document.getElementById('dialog-form');
+            if (!formulario) return {};
+            return Object.fromEntries(new FormData(formulario).entries());
         }
     };
 </script>

@@ -1,32 +1,26 @@
 <script>
     /**
-      * Contenedor UI encargado exclusivamente de renderizar los datos del usuario en el DOM.
-      */
+     * Contenedor UI encargado de renderizar los datos del usuario en el DOM.
+     */
     const UserDOM = {
-        // Almacenamos las referencias al DOM para no repetir querySelectors en todo el código
         elementos: {
             nombre: () => document.querySelector('.user-name'),
             correo: () => document.getElementById('user-correo')
         },
 
-        /**
-         * Coordina la carga de datos y actualiza los elementos visuales.
-         */
         async cargarInformacion() {
             try {
-                // 1. Solicitamos los datos al servicio especializado
                 const usuario = await UserService.obtenerDatos();
+                AppState.usuario = usuario;
 
-                // 2. Renderizamos en la interfaz utilizando las referencias
                 this.elementos.nombre().innerText = usuario.nombre;
                 this.elementos.correo().innerText = usuario.email;
 
+                Sistema.actualizarPermisosUI();
             } catch (err) {
-                // 3. Control de errores visuales centralizado
-                console.log(`No se pudo cargar el perfil: ${err.message}`)
-                // showToast('error', `No se pudo cargar el perfil: ${err.message}`);
+                console.error(`No se pudo cargar el perfil: ${err.message}`);
+                showToast('error', 'No se pudo cargar tu perfil de usuario.');
             }
         }
     };
-
 </script>
