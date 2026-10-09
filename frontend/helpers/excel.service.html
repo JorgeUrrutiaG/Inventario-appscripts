@@ -1,11 +1,15 @@
 <script>
     /**
-     * Servicio de exportación a Excel de la vista activa (SheetJS).
+     * Servicio de exportación a Excel (SheetJS).
+     * @param {Object} [opciones]
+     * @param {string} [opciones.entidad] - entidad por defecto ('Notebook' | 'Carro' | 'Modelo')
+     * @param {Object} [opciones.datos] - { cabeceras, filas } a exportar (si no, la vista activa)
+     * @param {string} [opciones.sufijo] - texto extra para el nombre del archivo
      */
     const ExcelService = {
-        descargar() {
-            const entidad = AppState.estadoActual;
-            const { cabeceras, filas } = Sistema.filasVista(entidad);
+        descargar(opciones = {}) {
+            const entidad = opciones.entidad || AppState.estadoActual;
+            const { cabeceras, filas } = opciones.datos || Sistema.filasVista(entidad);
 
             if (!filas || filas.length === 0) {
                 showToast('warning', 'No hay datos para exportar');
@@ -25,7 +29,10 @@
                 XLSX.utils.book_append_sheet(wb, ws, entidad);
 
                 const fecha = new Date().toISOString().split('T')[0];
-                XLSX.writeFile(wb, `Inventario_${entidad}_${fecha}.xlsx`);
+                const sufijo = opciones.sufijo
+                    ? '_' + String(opciones.sufijo).trim().replace(/[^\wáéíóúñü]+/gi, '_')
+                    : '';
+                XLSX.writeFile(wb, `Inventario_${entidad}${sufijo}_${fecha}.xlsx`);
             } catch (error) {
                 console.error('Error en el servicio de exportación Excel:', error);
                 showToast('error', 'Error al generar el archivo Excel');

@@ -46,11 +46,13 @@
 
         _renderizar() {
             const cuerpo = document.getElementById('carro-nb-body');
+            const pie = document.getElementById('carro-nb-footer');
             const col = VISTAS.Notebook.columnas;
             const cabeceras = ['Posición', 'Marca', 'Modelo', 'Serie', 'Nro Interno', 'Estado'];
             const columnas = [col.posicion, col.marca, col.modelo, col.serie, col.nroInterno, col.estado];
 
             const filas = AppState.datos.Notebook.filter(f => f[col.carro] === this._carro);
+            if (pie) pie.style.display = filas.length > 0 ? 'flex' : 'none';
 
             if (filas.length === 0) {
                 cuerpo.innerHTML = '<p class="dialog-text">Este carro no tiene notebooks asignados.</p>';
@@ -95,11 +97,28 @@
             ModalDOM.abrir(accion, 'Notebook', payload);
         },
 
+        /**
+         * Descarga en Excel solo los notebooks de este carro.
+         */
+        _descargarExcel() {
+            const { cabeceras, filas } = Sistema.filasVista('Notebook');
+            const col = VISTAS.Notebook.columnas;
+            const filtradas = filas.filter(f => f[col.carro] === this._carro);
+
+            ExcelService.descargar({
+                entidad: 'Notebook',
+                datos: { cabeceras, filas: filtradas },
+                sufijo: this._carro
+            });
+        },
+
         inicializar() {
             const dialogo = this.instancia();
             if (!dialogo) return;
 
             dialogo.querySelector('.dialog-close-btn')?.addEventListener('click', () => dialogo.close());
+
+            document.getElementById('carro-nb-excel')?.addEventListener('click', () => this._descargarExcel());
 
             document.getElementById('carro-nb-body')?.addEventListener('click', (event) => {
                 const btnDelete = event.target.closest('.btn-delete-nb');

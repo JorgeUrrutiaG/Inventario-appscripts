@@ -16,7 +16,9 @@
      * Convierte un valor de celda en una clase CSS segura (badge/marca).
      */
     function claseSegura(valor) {
-        return String(valor ?? '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+        return String(valor ?? '').toLowerCase().trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
     }
 
     /**
